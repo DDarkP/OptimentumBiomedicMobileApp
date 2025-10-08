@@ -1,13 +1,22 @@
 package com.example.views.ui.views
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.views.ui.views.component.MenuOptionCard
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MenuScreen(
     onHojasDeVidaClick: () -> Unit,
@@ -15,57 +24,63 @@ fun MenuScreen(
     onInventarioClick: () -> Unit,
     onContratoClick: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
-    ) {
-        Text(
-            text = "Menú Principal",
-            style = MaterialTheme.typography.headlineMedium
+    val options = listOf(
+        MenuOption(
+            title = "Hojas de vida",
+            icon = Icons.Default.Description,
+            onClick = onHojasDeVidaClick
+        ),
+        MenuOption(
+            title = "Cotización de servicios y equipo",
+            icon = Icons.Default.Build,
+            onClick = onCotizacionClick
+        ),
+        MenuOption(
+            title = "Inventario de equipos",
+            icon = Icons.Default.Inventory,
+            onClick = onInventarioClick
+        ),
+        MenuOption(
+            title = "Contrato",
+            icon = Icons.Default.Assignment,
+            onClick = onContratoClick
         )
+    )
 
-        Button(
-            onClick = onHojasDeVidaClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Realizar hojas de vida")
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Menú Principal") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
         }
-
-        Button(
-            onClick = onCotizacionClick,
-            modifier = Modifier.fillMaxWidth()
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Cotización de servicios y equipo")
-        }
-
-        Button(
-            onClick = onInventarioClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Inventario de equipos")
-        }
-
-        Button(
-            onClick = onContratoClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Contrato")
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(160.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(options) { option ->
+                    MenuOptionCard(option)
+                }
+            }
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun MenuScreenPreview() {
-    MaterialTheme {
-        MenuScreen(
-            onHojasDeVidaClick = {},
-            onCotizacionClick = {},
-            onInventarioClick = {},
-            onContratoClick = {}
-        )
-    }
-}
+data class MenuOption(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val onClick: () -> Unit
+)
