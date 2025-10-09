@@ -5,7 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ui.views.login.LoginScreen
-import com.example.views.ui.views.SignUp
+import com.example.views.ui.views.SignUpScreen
 import com.example.views.ui.views.MenuScreen
 import com.example.views.ui.views.InventarioScreen
 
@@ -36,20 +36,15 @@ fun AppNav() {
             )
         }
         composable("signup") {
-            SignUp(
-                onSignupClick = { name, email, password ->
-                    // registro
-                    navController.popBackStack() // vuelve al login
-                },
-                onBackToLoginClick = {
-                    navController.popBackStack() // vuelve al login
-                }
+            SignUpScreen(
+                onSignupSuccess = { navController.popBackStack() },
+                onBackToLoginClick = { navController.popBackStack() }
             )
         }
         // Pantalla de menú
         composable("menu") {
             MenuScreen(
-                
+
                 onHojasDeVidaClick = { /* navController.navigate("hojas") */ },
                 onCotizacionClick = { /* navController.navigate("cotizacion") */ },
                 onInventarioClick = { navController.navigate("inventario") },
