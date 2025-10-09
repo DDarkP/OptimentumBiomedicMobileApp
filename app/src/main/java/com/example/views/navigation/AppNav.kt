@@ -14,20 +14,6 @@ fun AppNav() {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "login") {
-//        composable("login") {
-//
-//            Login(
-//                onLoginClick = { email, pass ->
-//                    navController.navigate("menu")// validación
-//                },
-//                onForgotPasswordClick = {
-//                    // navegación recuperar contraseña
-//                },
-//                onRegisterClick = {
-//                    navController.navigate("signup")
-//                }
-//            )
-//        }
         composable("login") {
             LoginScreen(
                 onLoginSuccess = { navController.navigate("menu") },
