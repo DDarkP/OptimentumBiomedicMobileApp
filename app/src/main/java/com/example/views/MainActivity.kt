@@ -11,7 +11,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                AppNav() // Aquí va tu navegación
+                AppNav()
             }
         }
     }

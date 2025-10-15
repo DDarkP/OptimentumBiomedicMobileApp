@@ -39,10 +39,7 @@ fun AppNav() {
         }
 
         composable("inventario") {
-            InventarioScreen(
-                itemsList = listOf("Laptop Dell", "Proyector Epson", "Router Cisco"),
-                onBackClick = { navController.popBackStack() }
-            )
+            InventarioScreen()
         }
     }
 }
