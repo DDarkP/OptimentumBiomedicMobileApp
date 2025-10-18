@@ -4,25 +4,26 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.views.data.model.Equipo
+import com.example.views.data.repository.EquipoRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.apache.poi.ss.usermodel.Sheet
+import org.apache.poi.ss.util.CellRangeAddress
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
-import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
-import com.example.views.data.model.Equipo
-import com.example.views.data.repository.EquipoRepository
+import java.io.OutputStream
 
 /**
  * ViewModel para manejar la lógica del inventario:
  * - Estados del formulario
  * - Inserción en la base de datos
- * - Exportación a Excel usando la plantilla.
+ * - Exportación a Excel usando la plantilla con celdas combinadas.
  */
 class InventarioViewModel(private val repository: EquipoRepository) : ViewModel() {
 
-    // Estado del formulario (se puede conectar a Compose con collectAsState)
+    // Estado del formulario
     private val _equipoActual = MutableStateFlow(Equipo())
     val equipoActual: StateFlow<Equipo> = _equipoActual
 
@@ -43,45 +44,40 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
     }
 
     /**
-     * Exporta el equipo actual a un archivo Excel basado en la plantilla.
-     * @param context Contexto de la app (para acceder a archivos).
-     * @param plantillaStream InputStream de la plantilla Excel.
+     * Exporta los datos del equipo actual a un archivo Excel basado en la plantilla,
+     * detectando celdas combinadas para escribir correctamente.
      */
-    fun exportarAExcel(context: Context, plantillaStream: InputStream) {
+    fun exportarAExcelAUri(context: Context, plantillaStream: InputStream, outputStream: OutputStream) {
         viewModelScope.launch {
             try {
                 val equipo = _equipoActual.value
                 val workbook = XSSFWorkbook(plantillaStream)
                 val sheet = workbook.getSheetAt(0)
 
-                // Escribir datos en la plantilla (ajusta las filas/columnas según tu formato)
-                sheet.getRow(6)?.getCell(1)?.setCellValue(equipo.informacionGeneral)
-                sheet.getRow(7)?.getCell(4)?.setCellValue(equipo.marca)
-                sheet.getRow(8)?.getCell(4)?.setCellValue(equipo.modelo)
-                sheet.getRow(9)?.getCell(4)?.setCellValue(equipo.serie)
-                sheet.getRow(10)?.getCell(4 )?.setCellValue(equipo.clasificacionBiomedica)
-                sheet.getRow(6)?.getCell(1)?.setCellValue(equipo.tecnologiaPredominante)
-                sheet.getRow(7)?.getCell(1)?.setCellValue(equipo.clasificacionRiesgoBiologico)
-                sheet.getRow(8)?.getCell(1)?.setCellValue(equipo.clasificacionRiesgoElectrico)
-                sheet.getRow(9)?.getCell(1)?.setCellValue("${equipo.voltajeMin} - ${equipo.voltajeMax} V")
-                sheet.getRow(10)?.getCell(1)?.setCellValue("${equipo.corrienteMin} - ${equipo.corrienteMax} A")
-                sheet.getRow(11)?.getCell(1)?.setCellValue(equipo.cantidad.toString())
-                sheet.getRow(12)?.getCell(1)?.setCellValue(equipo.valorEquipo?.toString() ?: "")
-                sheet.getRow(13)?.getCell(1)?.setCellValue(equipo.valorMantenimiento?.toString() ?: "")
+                // 🧩 Escribir valores detectando celdas combinadas
+                safeSetCellValue(sheet, 6, 3, equipo.marca)                     // Fila 7, col D (Marca)
+                safeSetCellValue(sheet, 7, 3, equipo.modelo)                   // Fila 8, col D (Modelo)
+                safeSetCellValue(sheet, 8, 3, equipo.serie)                    // Fila 9, col D (Serie)
+                safeSetCellValue(sheet, 9, 3, equipo.clasificacionBiomedica)   // Fila 10, col D (Clasificación biomédica)
+                safeSetCellValue(sheet, 10, 3, equipo.tecnologiaPredominante)
+                safeSetCellValue(sheet, 11, 3, equipo.clasificacionRiesgoBiologico)
+                safeSetCellValue(sheet, 12, 3, equipo.clasificacionRiesgoElectrico)
+                safeSetCellValue(sheet, 13, 3, "${equipo.voltajeMin ?: 0} - ${equipo.voltajeMax ?: 0} V")
+                safeSetCellValue(sheet, 14, 3, "${equipo.corrienteMin ?: 0} - ${equipo.corrienteMax ?: 0} A")
+                safeSetCellValue(sheet, 15, 3, equipo.cantidad.toString())
+                safeSetCellValue(sheet, 16, 3, equipo.valorEquipo?.toString() ?: "")
+                safeSetCellValue(sheet, 17, 3, equipo.valorMantenimiento?.toString() ?: "")
+                safeSetCellValue(sheet, 5, 3, equipo.informacionGeneral)       // Fila 6, col D (Información general)
 
-                // Guardar el nuevo archivo
-                val outFile = File(
-                    context.getExternalFilesDir(null),
-                    "Equipo_${System.currentTimeMillis()}.xlsx"
-                )
-                FileOutputStream(outFile).use { workbook.write(it) }
+                // 🗂️ Guardar archivo
+                workbook.write(outputStream)
                 workbook.close()
 
-                _exportacionExitosa.value = outFile.absolutePath
+                _exportacionExitosa.value = "✅ Archivo guardado correctamente con los datos del equipo."
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                _exportacionExitosa.value = null
+                _exportacionExitosa.value = "❌ Error al exportar el archivo: ${e.message}"
             }
         }
     }
@@ -89,5 +85,31 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
     /** Carga una imagen y actualiza el URI del equipo */
     fun actualizarFoto(uri: Uri?) {
         _equipoActual.value = _equipoActual.value.copy(fotoUri = uri?.toString())
+    }
+
+    /**
+     * Escribe un valor en una celda, detectando si pertenece a un rango combinado.
+     * Si es así, escribe en la celda superior izquierda del rango.
+     */
+    private fun safeSetCellValue(sheet: Sheet, rowIndex: Int, colIndex: Int, value: String?) {
+        val mergedRegions: List<CellRangeAddress> = sheet.mergedRegions
+
+        // Buscar si la celda pertenece a un rango combinado
+        val mergedRegion = mergedRegions.firstOrNull { it.isInRange(rowIndex, colIndex) }
+
+        val targetRowIndex: Int
+        val targetColIndex: Int
+
+        if (mergedRegion != null) {
+            targetRowIndex = mergedRegion.firstRow
+            targetColIndex = mergedRegion.firstColumn
+        } else {
+            targetRowIndex = rowIndex
+            targetColIndex = colIndex
+        }
+
+        val row = sheet.getRow(targetRowIndex) ?: sheet.createRow(targetRowIndex)
+        val cell = row.getCell(targetColIndex) ?: row.createCell(targetColIndex)
+        cell.setCellValue(value ?: "")
     }
 }

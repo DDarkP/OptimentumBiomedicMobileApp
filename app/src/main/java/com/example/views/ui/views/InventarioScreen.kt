@@ -2,6 +2,7 @@ package com.example.views.ui.views
 
 import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -10,21 +11,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.views.data.AppDatabase
-import com.example.views.data.model.Equipo
 import com.example.views.data.repository.EquipoRepository
 import com.example.views.view_model.InventarioViewModel
 import com.example.views.view_model.InventarioViewModelFactory
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.InputStream
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,17 +43,45 @@ fun InventarioScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // Selector de imagen (foto del equipo)
+    // 📸 Selector de imagen (foto del equipo)
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         viewModel.actualizarFoto(uri)
     }
 
+    // 📂 Lanzador para crear el archivo Excel donde el usuario elija
+    val crearArchivoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    ) { uri: Uri? ->
+        if (uri != null) {
+            context.contentResolver.openOutputStream(uri)?.use { output ->
+                val plantilla = cargarPlantilla(context)
+                if (plantilla != null) {
+                    viewModel.exportarAExcelAUri(context, plantilla, output)
+                    Toast.makeText(
+                        context,
+                        "✅ Archivo guardado correctamente",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        context,
+                        "❌ No se encontró la plantilla Excel en recursos",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Registro de Equipo Biomédico") })
-        }, snackbarHost = { SnackbarHost(snackbarHostState) }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -68,85 +93,107 @@ fun InventarioScreen() {
         ) {
             // Campos del formulario
             CampoTexto("Información general", equipo.informacionGeneral) { valor ->
-                viewModel.actualizarCampo { equipoActual -> equipoActual.copy(informacionGeneral = valor) }
+                viewModel.actualizarCampo { it.copy(informacionGeneral = valor) }
             }
             CampoTexto("Marca", equipo.marca) { valor ->
-                viewModel.actualizarCampo { equipoActual -> equipoActual.copy(marca = valor) }
+                viewModel.actualizarCampo { it.copy(marca = valor) }
             }
             CampoTexto("Modelo", equipo.modelo) { valor ->
-                viewModel.actualizarCampo { equipoActual -> equipoActual.copy(modelo = valor) }
+                viewModel.actualizarCampo { it.copy(modelo = valor) }
             }
             CampoTexto("Serie", equipo.serie) { valor ->
-                viewModel.actualizarCampo { equipoActual -> equipoActual.copy(serie = valor) }
+                viewModel.actualizarCampo { it.copy(serie = valor) }
             }
             CampoTexto("Clasificación biomédica", equipo.clasificacionBiomedica) { valor ->
-                viewModel.actualizarCampo { equipoActual -> equipoActual.copy(clasificacionBiomedica = valor) }
+                viewModel.actualizarCampo { it.copy(clasificacionBiomedica = valor) }
             }
             CampoTexto("Tecnología predominante", equipo.tecnologiaPredominante) { valor ->
-                viewModel.actualizarCampo { equipoActual -> equipoActual.copy(tecnologiaPredominante = valor) }
+                viewModel.actualizarCampo { it.copy(tecnologiaPredominante = valor) }
             }
             CampoTexto("Riesgo biológico", equipo.clasificacionRiesgoBiologico) { valor ->
-                viewModel.actualizarCampo { equipoActual ->
-                    equipoActual.copy(
-                        clasificacionRiesgoBiologico = valor
-                    )
-                }
+                viewModel.actualizarCampo { it.copy(clasificacionRiesgoBiologico = valor) }
             }
             CampoTexto("Riesgo eléctrico", equipo.clasificacionRiesgoElectrico) { valor ->
-                viewModel.actualizarCampo { equipoActual ->
-                    equipoActual.copy(
-                        clasificacionRiesgoElectrico = valor
-                    )
-                }
+                viewModel.actualizarCampo { it.copy(clasificacionRiesgoElectrico = valor) }
+            }
+// Voltaje
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                CampoNumero(
+                    label = "Voltaje min (V)",
+                    valor = equipo.voltajeMin?.toString() ?: "",
+                    onChange = { valor ->
+                        viewModel.actualizarCampo { it.copy(voltajeMin = valor.toDoubleOrNull()) }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+
+                CampoNumero(
+                    label = "Voltaje máx (V)",
+                    valor = equipo.voltajeMax?.toString() ?: "",
+                    onChange = { valor ->
+                        viewModel.actualizarCampo { it.copy(voltajeMax = valor.toDoubleOrNull()) }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+// Corriente
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                CampoNumero(
+                    label = "Corriente min (A)",
+                    valor = equipo.corrienteMin?.toString() ?: "",
+                    onChange = { valor ->
+                        viewModel.actualizarCampo { it.copy(corrienteMin = valor.toDoubleOrNull()) }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+
+                CampoNumero(
+                    label = "Corriente máx (A)",
+                    valor = equipo.corrienteMax?.toString() ?: "",
+                    onChange = { valor ->
+                        viewModel.actualizarCampo { it.copy(corrienteMax = valor.toDoubleOrNull()) }
+                    },
+                    modifier = Modifier.weight(1f)
+                )
             }
 
 
-            // Voltaje
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CampoNumero(
-                    "Voltaje min (V)",
-                    equipo.voltajeMin?.toString() ?: ""
-                ) { valor: String ->
-                    viewModel.actualizarCampo { eq -> eq.copy(voltajeMin = valor.toDoubleOrNull()) }
-                }
-                CampoNumero(
-                    "Voltaje máx (V)",
-                    equipo.voltajeMax?.toString() ?: ""
-                ) { valor: String ->
-                    viewModel.actualizarCampo { eq -> eq.copy(voltajeMax = valor.toDoubleOrNull()) }
-                }
-            }
-
-            // Corriente
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CampoNumero(
-                    "Corriente min (A)",
-                    equipo.corrienteMin?.toString() ?: ""
-                ) { valor: String ->
-                    viewModel.actualizarCampo { eq -> eq.copy(corrienteMin = valor.toDoubleOrNull()) }
-                }
-                CampoNumero(
-                    "Corriente máx (A)",
-                    equipo.corrienteMax?.toString() ?: ""
-                ) { valor: String ->
-                    viewModel.actualizarCampo { eq -> eq.copy(corrienteMax = valor.toDoubleOrNull()) }
-                }
-            }
-
-            CampoNumero("Cantidad", equipo.cantidad.toString()) { valor: String ->
-                viewModel.actualizarCampo { eq -> eq.copy(cantidad = valor.toIntOrNull() ?: 1) }
-            }
-            CampoNumero("Valor equipo", equipo.valorEquipo?.toString() ?: "") { valor: String ->
-                viewModel.actualizarCampo { eq -> eq.copy(valorEquipo = valor.toDoubleOrNull()) }
-            }
             CampoNumero(
-                "Valor mantenimiento",
-                equipo.valorMantenimiento?.toString() ?: ""
-            ) { valor: String ->
-                viewModel.actualizarCampo { eq -> eq.copy(valorMantenimiento = valor.toDoubleOrNull()) }
-            }
+                label = "Cantidad",
+                valor = equipo.cantidad.toString(),
+                onChange = { valor ->
+                    viewModel.actualizarCampo { it.copy(cantidad = valor.toIntOrNull() ?: 1) }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
 
-            // Botón para seleccionar foto
+            CampoNumero(
+                label = "Valor equipo",
+                valor = equipo.valorEquipo?.toString() ?: "",
+                onChange = { valor ->
+                    viewModel.actualizarCampo { it.copy(valorEquipo = valor.toDoubleOrNull()) }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            CampoNumero(
+                label = "Valor mantenimiento",
+                valor = equipo.valorMantenimiento?.toString() ?: "",
+                onChange = { valor ->
+                    viewModel.actualizarCampo { it.copy(valorMantenimiento = valor.toDoubleOrNull()) }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+
+            // 📸 Botón para seleccionar foto
             Button(
                 onClick = { imagePicker.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
@@ -154,12 +201,12 @@ fun InventarioScreen() {
                 Text(if (equipo.fotoUri != null) "Cambiar foto" else "Agregar foto")
             }
 
-            // Botones de acción
+            // 💾 Botón para guardar equipo
             Button(
                 onClick = {
                     viewModel.guardarEquipo()
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Equipo guardado correctamente")
+                        snackbarHostState.showSnackbar("✅ Equipo guardado correctamente")
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -167,48 +214,26 @@ fun InventarioScreen() {
                 Text("Guardar equipo")
             }
 
+            // 📤 Botón para exportar Excel con diálogo de guardado
             Button(
                 onClick = {
-                    val plantilla = cargarPlantilla(context)
-                    if (plantilla != null) {
-                        viewModel.exportarAExcel(context, plantilla)
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(
-                                "✅ Archivo Excel generado correctamente",
-                                withDismissAction = true
-                            )
-                        }
-                    } else {
-                        coroutineScope.launch {
-                            snackbarHostState.showSnackbar(
-                                "❌ No se encontró la plantilla Excel en assets/",
-                                withDismissAction = true
-                            )
-                        }
-                    }
+                    val nombreArchivo =
+                        "Equipo_${equipo.marca}_${equipo.modelo}_${System.currentTimeMillis()}.xlsx"
+                    crearArchivoLauncher.launch(nombreArchivo)
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Exportar a Excel")
             }
 
-            // Mostrar ruta si la exportación fue exitosa
-            exportacionExitosa?.let { ruta ->
+            // 📋 Mostrar mensaje si se exportó correctamente
+            exportacionExitosa?.let { mensaje ->
                 Text(
-                    text = "📂 Archivo generado en:\n$ruta",
+                    text = mensaje,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
         }
-
-        // Mostrar resultado de exportación
-        exportacionExitosa?.let { ruta ->
-            Text(
-                text = "Archivo generado en:\n$ruta",
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-
     }
 }
 
@@ -225,21 +250,37 @@ fun CampoTexto(label: String, valor: String, onChange: (String) -> Unit) {
 
 /** Campo numérico (acepta solo números y decimales) */
 @Composable
-fun CampoNumero(label: String, valor: String, onChange: (String) -> Unit) {
+fun CampoNumero(
+    label: String,
+    valor: String,
+    onChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     OutlinedTextField(
         value = valor,
         onValueChange = onChange,
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier.fillMaxWidth(1f)
+        modifier = modifier
+            .widthIn(min = 140.dp) // ancho mínimo para evitar que se encoja demasiado
     )
 }
 
+//@Composable
+//fun CampoNumero(label: String, valor: String, onChange: (String) -> Unit) {
+//    OutlinedTextField(
+//        value = valor,
+//        onValueChange = onChange,
+//        label = { Text(label) },
+//        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+//        modifier = Modifier.fillMaxWidth()
+//    )
+//}
+
+/** Carga la plantilla Excel desde /res/raw/ */
 fun cargarPlantilla(context: Context): InputStream? {
     return try {
-        context.resources.openRawResource(
-            com.example.views.R.raw.plantilla  // usa el nombre sin extensión
-        )
+        context.resources.openRawResource(com.example.views.R.raw.plantilla)
     } catch (e: Exception) {
         e.printStackTrace()
         null
