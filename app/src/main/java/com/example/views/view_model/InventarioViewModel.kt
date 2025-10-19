@@ -54,30 +54,39 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                 val workbook = XSSFWorkbook(plantillaStream)
                 val sheet = workbook.getSheetAt(0)
 
-                // 🧩 Escribir valores detectando celdas combinadas
-                safeSetCellValue(sheet, 6, 3, equipo.marca)                     // Fila 7, col D (Marca)
-                safeSetCellValue(sheet, 7, 3, equipo.modelo)                   // Fila 8, col D (Modelo)
-                safeSetCellValue(sheet, 8, 3, equipo.serie)                    // Fila 9, col D (Serie)
-                safeSetCellValue(sheet, 9, 3, equipo.clasificacionBiomedica)   // Fila 10, col D (Clasificación biomédica)
-                safeSetCellValue(sheet, 10, 3, equipo.tecnologiaPredominante)
-                safeSetCellValue(sheet, 11, 3, equipo.clasificacionRiesgoBiologico)
-                safeSetCellValue(sheet, 12, 3, equipo.clasificacionRiesgoElectrico)
-                safeSetCellValue(sheet, 13, 3, "${equipo.voltajeMin ?: 0} - ${equipo.voltajeMax ?: 0} V")
-                safeSetCellValue(sheet, 14, 3, "${equipo.corrienteMin ?: 0} - ${equipo.corrienteMax ?: 0} A")
-                safeSetCellValue(sheet, 15, 3, equipo.cantidad.toString())
-                safeSetCellValue(sheet, 16, 3, equipo.valorEquipo?.toString() ?: "")
-                safeSetCellValue(sheet, 17, 3, equipo.valorMantenimiento?.toString() ?: "")
-                safeSetCellValue(sheet, 5, 3, equipo.informacionGeneral)       // Fila 6, col D (Información general)
+                // 🧩 Mapeo de campos -> posiciones (fila, columna)
+                safeSetCellValue(sheet, 5, 3, equipo.nombreEquipo)                 // NOMBRE DEL EQUIPO
+                safeSetCellValue(sheet, 6, 3, equipo.informacionGeneral)           // INFORMACION GENERAL
+                safeSetCellValue(sheet, 7, 3, equipo.marca)                        // MARCA
+                safeSetCellValue(sheet, 8, 3, equipo.modelo)                       // MODELO
+                safeSetCellValue(sheet, 9, 3, equipo.serie)                        // SERIE
+                safeSetCellValue(sheet, 10, 3, equipo.tipo)                        // TIPO
+                safeSetCellValue(sheet, 11, 3, equipo.referencia)                  // REFERENCIA
+                safeSetCellValue(sheet, 12, 3, equipo.codigoEquipo)                // CODIGO DEL EQUIPO
+                safeSetCellValue(sheet, 13, 3, equipo.numeroInventario)            // No. INVENTARIO
+                safeSetCellValue(sheet, 14, 3, equipo.edificio)                    // EDIFICIO
+                safeSetCellValue(sheet, 15, 3, equipo.area)                        // AREA
+                safeSetCellValue(sheet, 16, 3, equipo.direccion)                   // DIRECCION
+                safeSetCellValue(sheet, 17, 3, equipo.ubicacion)                   // UBICACION
+                safeSetCellValue(sheet, 18, 3, equipo.centroCostos)                // CENTRO DE COSTOS
+                safeSetCellValue(sheet, 19, 3, equipo.responsable)                 // RESPONSABLE
+                safeSetCellValue(sheet, 20, 3, equipo.clasificacionBiomedica)      // CLASIFICACION BIOMEDICA
+                safeSetCellValue(sheet, 21, 3, equipo.tecnologiaPredominante)      // TECNOLOGIA PREDOMINANTE
+                safeSetCellValue(sheet, 22, 3, equipo.clasificacionRiesgoBiologico)// CLASIFICACION RIESGO BIOLOGICO
+                safeSetCellValue(sheet, 23, 3, equipo.voltajeMax?.toString() ?: "")// VOLTAJE MAX
+                safeSetCellValue(sheet, 24, 3, equipo.voltajeMin?.toString() ?: "")// VOLTAJE MIN
+                safeSetCellValue(sheet, 25, 3, equipo.corrienteMax?.toString() ?: "")// CORRIENTE MAX
+                safeSetCellValue(sheet, 26, 3, equipo.corrienteMin?.toString() ?: "")// CORRIENTE MIN
 
                 // 🗂️ Guardar archivo
                 workbook.write(outputStream)
                 workbook.close()
 
-                _exportacionExitosa.value = "✅ Archivo guardado correctamente con los datos del equipo."
+                _exportacionExitosa.value = "✅ Archivo exportado correctamente con los datos del equipo."
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                _exportacionExitosa.value = "❌ Error al exportar el archivo: ${e.message}"
+                _exportacionExitosa.value = "❌ Error al exportar: ${e.message}"
             }
         }
     }

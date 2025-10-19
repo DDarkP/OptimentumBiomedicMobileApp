@@ -12,53 +12,30 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "equipos")
 data class Equipo(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0L,
+    val id: Int = 0,
 
-    @ColumnInfo(name = "info_general")
+    val nombreEquipo: String = "",
     val informacionGeneral: String = "",
-
-    @ColumnInfo(name = "marca")
     val marca: String = "",
-
-    @ColumnInfo(name = "modelo")
     val modelo: String = "",
-
-    @ColumnInfo(name = "serie")
     val serie: String = "",
-
-    @ColumnInfo(name = "clas_biomedica")
+    val tipo: String = "",
+    val referencia: String = "",
+    val codigoEquipo: String = "",
+    val numeroInventario: String = "",
+    val edificio: String = "",
+    val area: String = "",
+    val direccion: String = "",
+    val ubicacion: String = "",
+    val centroCostos: String = "",
+    val responsable: String = "",
     val clasificacionBiomedica: String = "",
-
-    @ColumnInfo(name = "tec_predominante")
     val tecnologiaPredominante: String = "",
-
-    @ColumnInfo(name = "riesgo_biologico")
     val clasificacionRiesgoBiologico: String = "",
-
-    @ColumnInfo(name = "foto_uri")
-    val fotoUri: String? = null,
-
-    @ColumnInfo(name = "riesgo_electrico")
-    val clasificacionRiesgoElectrico: String = "",
-
-    @ColumnInfo(name = "voltaje_min")
-    val voltajeMin: Double? = null,
-
-    @ColumnInfo(name = "voltaje_max")
     val voltajeMax: Double? = null,
-
-    @ColumnInfo(name = "corriente_min")
+    val voltajeMin: Double? = null,
+    val corrienteMax: Double? = null,
     val corrienteMin: Double? = null,
 
-    @ColumnInfo(name = "corriente_max")
-    val corrienteMax: Double? = null,
-
-    @ColumnInfo(name = "cantidad")
-    val cantidad: Int = 1,
-
-    @ColumnInfo(name = "valor_equipo")
-    val valorEquipo: Double? = null,
-
-    @ColumnInfo(name = "valor_mantenimiento")
-    val valorMantenimiento: Double? = null
+    val fotoUri: String? = null // opcional, si guardas una imagen
 )

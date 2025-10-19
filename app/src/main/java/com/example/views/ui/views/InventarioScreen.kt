@@ -5,6 +5,9 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.views.data.AppDatabase
@@ -27,15 +31,9 @@ import java.io.InputStream
 @Composable
 fun InventarioScreen() {
     val context = LocalContext.current
-
-    // Instancia del repositorio y base de datos
     val db = AppDatabase.getDatabase(context)
     val repository = EquipoRepository(db.equipoDao())
-
-    // ✅ Crea el ViewModel correctamente con el factory
-    val viewModel: InventarioViewModel = viewModel(
-        factory = InventarioViewModelFactory(repository)
-    )
+    val viewModel: InventarioViewModel = viewModel(factory = InventarioViewModelFactory(repository))
 
     val equipo by viewModel.equipoActual.collectAsState()
     val exportacionExitosa by viewModel.exportacionExitosa.collectAsState()
@@ -43,14 +41,14 @@ fun InventarioScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // 📸 Selector de imagen (foto del equipo)
+    // 📸 Selector de imagen
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         viewModel.actualizarFoto(uri)
     }
 
-    // 📂 Lanzador para crear el archivo Excel donde el usuario elija
+    // 📂 Crear archivo (el usuario elige la ubicación)
     val crearArchivoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -87,113 +85,110 @@ fun InventarioScreen() {
             modifier = Modifier
                 .padding(padding)
                 .padding(16.dp)
-                .fillMaxSize()
                 .verticalScroll(scrollState),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Campos del formulario
-            CampoTexto("Información general", equipo.informacionGeneral) { valor ->
-                viewModel.actualizarCampo { it.copy(informacionGeneral = valor) }
-            }
-            CampoTexto("Marca", equipo.marca) { valor ->
-                viewModel.actualizarCampo { it.copy(marca = valor) }
-            }
-            CampoTexto("Modelo", equipo.modelo) { valor ->
-                viewModel.actualizarCampo { it.copy(modelo = valor) }
-            }
-            CampoTexto("Serie", equipo.serie) { valor ->
-                viewModel.actualizarCampo { it.copy(serie = valor) }
-            }
-            CampoTexto("Clasificación biomédica", equipo.clasificacionBiomedica) { valor ->
-                viewModel.actualizarCampo { it.copy(clasificacionBiomedica = valor) }
-            }
-            CampoTexto("Tecnología predominante", equipo.tecnologiaPredominante) { valor ->
-                viewModel.actualizarCampo { it.copy(tecnologiaPredominante = valor) }
-            }
-            CampoTexto("Riesgo biológico", equipo.clasificacionRiesgoBiologico) { valor ->
-                viewModel.actualizarCampo { it.copy(clasificacionRiesgoBiologico = valor) }
-            }
-            CampoTexto("Riesgo eléctrico", equipo.clasificacionRiesgoElectrico) { valor ->
-                viewModel.actualizarCampo { it.copy(clasificacionRiesgoElectrico = valor) }
-            }
-// Voltaje
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                CampoNumero(
-                    label = "Voltaje min (V)",
-                    valor = equipo.voltajeMin?.toString() ?: "",
-                    onChange = { valor ->
-                        viewModel.actualizarCampo { it.copy(voltajeMin = valor.toDoubleOrNull()) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
 
-                CampoNumero(
-                    label = "Voltaje máx (V)",
-                    valor = equipo.voltajeMax?.toString() ?: "",
-                    onChange = { valor ->
-                        viewModel.actualizarCampo { it.copy(voltajeMax = valor.toDoubleOrNull()) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
+            /** -------- SECCIÓN 1: DATOS GENERALES -------- */
+            SeccionExpandible(titulo = "📘 Datos Generales") {
+                CampoTexto("Nombre del equipo", equipo.nombreEquipo) {
+                    viewModel.actualizarCampo { it.copy(nombreEquipo = it.nombreEquipo) }
+                }
+                CampoTexto("Información general", equipo.informacionGeneral) {
+                    viewModel.actualizarCampo { it.copy(informacionGeneral = it.informacionGeneral) }
+                }
+                CampoTexto("Marca", equipo.marca) { valor ->
+                    viewModel.actualizarCampo { it.copy(marca = valor) }
+                }
+                CampoTexto("Modelo", equipo.modelo) { valor ->
+                    viewModel.actualizarCampo { it.copy(modelo = valor) }
+                }
+                CampoTexto("Serie", equipo.serie) { valor ->
+                    viewModel.actualizarCampo { it.copy(serie = valor) }
+                }
+                CampoTexto("Tipo", equipo.tipo) { valor ->
+                    viewModel.actualizarCampo { it.copy(tipo = valor) }
+                }
+                CampoTexto("Referencia", equipo.referencia) { valor ->
+                    viewModel.actualizarCampo { it.copy(referencia = valor) }
+                }
+                CampoTexto("Código del equipo", equipo.codigoEquipo) { valor ->
+                    viewModel.actualizarCampo { it.copy(codigoEquipo = valor) }
+                }
+                CampoTexto("Número de inventario", equipo.numeroInventario) { valor ->
+                    viewModel.actualizarCampo { it.copy(numeroInventario = valor) }
+                }
             }
 
-// Corriente
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                CampoNumero(
-                    label = "Corriente min (A)",
-                    valor = equipo.corrienteMin?.toString() ?: "",
-                    onChange = { valor ->
-                        viewModel.actualizarCampo { it.copy(corrienteMin = valor.toDoubleOrNull()) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-
-                CampoNumero(
-                    label = "Corriente máx (A)",
-                    valor = equipo.corrienteMax?.toString() ?: "",
-                    onChange = { valor ->
-                        viewModel.actualizarCampo { it.copy(corrienteMax = valor.toDoubleOrNull()) }
-                    },
-                    modifier = Modifier.weight(1f)
-                )
+            /** -------- SECCIÓN 2: UBICACIÓN Y RESPONSABLE -------- */
+            SeccionExpandible(titulo = "📍 Ubicación y Responsable") {
+                CampoTexto("Edificio", equipo.edificio) { valor ->
+                    viewModel.actualizarCampo { it.copy(edificio = valor) }
+                }
+                CampoTexto("Área", equipo.area) { valor ->
+                    viewModel.actualizarCampo { it.copy(area = valor) }
+                }
+                CampoTexto("Dirección", equipo.direccion) { valor ->
+                    viewModel.actualizarCampo { it.copy(direccion = valor) }
+                }
+                CampoTexto("Ubicación", equipo.ubicacion) { valor ->
+                    viewModel.actualizarCampo { it.copy(ubicacion = valor) }
+                }
+                CampoTexto("Centro de costos", equipo.centroCostos) { valor ->
+                    viewModel.actualizarCampo { it.copy(centroCostos = valor) }
+                }
+                CampoTexto("Responsable", equipo.responsable) { valor ->
+                    viewModel.actualizarCampo { it.copy(responsable = valor) }
+                }
             }
 
+            /** -------- SECCIÓN 3: CLASIFICACIÓN TÉCNICA -------- */
+            SeccionExpandible(titulo = "⚙️ Clasificación Técnica") {
+                CampoTexto("Clasificación biomédica", equipo.clasificacionBiomedica) { valor ->
+                    viewModel.actualizarCampo { it.copy(clasificacionBiomedica = valor) }
+                }
+                CampoTexto("Tecnología predominante", equipo.tecnologiaPredominante) { valor ->
+                    viewModel.actualizarCampo { it.copy(tecnologiaPredominante = valor) }
+                }
+                CampoTexto("Clasificación riesgo biológico", equipo.clasificacionRiesgoBiologico) { valor ->
+                    viewModel.actualizarCampo { it.copy(clasificacionRiesgoBiologico = valor) }
+                }
+            }
 
-            CampoNumero(
-                label = "Cantidad",
-                valor = equipo.cantidad.toString(),
-                onChange = { valor ->
-                    viewModel.actualizarCampo { it.copy(cantidad = valor.toIntOrNull() ?: 1) }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+            /** -------- SECCIÓN 4: DATOS ELÉCTRICOS -------- */
+            SeccionExpandible(titulo = "⚡ Datos Eléctricos") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    CampoNumero(
+                        "Voltaje Máx (V)",
+                        equipo.voltajeMax?.toString() ?: "",
+                        { valor -> viewModel.actualizarCampo { it.copy(voltajeMax = valor.toDoubleOrNull()) } },
+                        Modifier.weight(1f)
+                    )
+                    CampoNumero(
+                        "Voltaje Mín (V)",
+                        equipo.voltajeMin?.toString() ?: "",
+                        { valor -> viewModel.actualizarCampo { it.copy(voltajeMin = valor.toDoubleOrNull()) } },
+                        Modifier.weight(1f)
+                    )
+                }
 
-            CampoNumero(
-                label = "Valor equipo",
-                valor = equipo.valorEquipo?.toString() ?: "",
-                onChange = { valor ->
-                    viewModel.actualizarCampo { it.copy(valorEquipo = valor.toDoubleOrNull()) }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    CampoNumero(
+                        "Corriente Máx (A)",
+                        equipo.corrienteMax?.toString() ?: "",
+                        { valor -> viewModel.actualizarCampo { it.copy(corrienteMax = valor.toDoubleOrNull()) } },
+                        Modifier.weight(1f)
+                    )
+                    CampoNumero(
+                        "Corriente Mín (A)",
+                        equipo.corrienteMin?.toString() ?: "",
+                        { valor -> viewModel.actualizarCampo { it.copy(corrienteMin = valor.toDoubleOrNull()) } },
+                        Modifier.weight(1f)
+                    )
+                }
+            }
 
-            CampoNumero(
-                label = "Valor mantenimiento",
-                valor = equipo.valorMantenimiento?.toString() ?: "",
-                onChange = { valor ->
-                    viewModel.actualizarCampo { it.copy(valorMantenimiento = valor.toDoubleOrNull()) }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-
-            // 📸 Botón para seleccionar foto
+            /** -------- ACCIONES -------- */
             Button(
                 onClick = { imagePicker.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
@@ -201,7 +196,6 @@ fun InventarioScreen() {
                 Text(if (equipo.fotoUri != null) "Cambiar foto" else "Agregar foto")
             }
 
-            // 💾 Botón para guardar equipo
             Button(
                 onClick = {
                     viewModel.guardarEquipo()
@@ -214,11 +208,9 @@ fun InventarioScreen() {
                 Text("Guardar equipo")
             }
 
-            // 📤 Botón para exportar Excel con diálogo de guardado
             Button(
                 onClick = {
-                    val nombreArchivo =
-                        "Equipo_${equipo.marca}_${equipo.modelo}_${System.currentTimeMillis()}.xlsx"
+                    val nombreArchivo = "Equipo_${equipo.nombreEquipo}_${System.currentTimeMillis()}.xlsx"
                     crearArchivoLauncher.launch(nombreArchivo)
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -226,18 +218,15 @@ fun InventarioScreen() {
                 Text("Exportar a Excel")
             }
 
-            // 📋 Mostrar mensaje si se exportó correctamente
             exportacionExitosa?.let { mensaje ->
-                Text(
-                    text = mensaje,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Text(text = mensaje, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
 
-/** Reutilizable para campos de texto */
+/** -------- COMPONENTES REUTILIZABLES -------- */
+
 @Composable
 fun CampoTexto(label: String, valor: String, onChange: (String) -> Unit) {
     OutlinedTextField(
@@ -248,7 +237,6 @@ fun CampoTexto(label: String, valor: String, onChange: (String) -> Unit) {
     )
 }
 
-/** Campo numérico (acepta solo números y decimales) */
 @Composable
 fun CampoNumero(
     label: String,
@@ -262,22 +250,42 @@ fun CampoNumero(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = modifier
-            .widthIn(min = 140.dp) // ancho mínimo para evitar que se encoja demasiado
+            .fillMaxWidth()
+            .widthIn(min = 140.dp)
     )
 }
 
-//@Composable
-//fun CampoNumero(label: String, valor: String, onChange: (String) -> Unit) {
-//    OutlinedTextField(
-//        value = valor,
-//        onValueChange = onChange,
-//        label = { Text(label) },
-//        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-//        modifier = Modifier.fillMaxWidth()
-//    )
-//}
+/** Sección expandible */
+@Composable
+fun SeccionExpandible(titulo: String, contenido: @Composable () -> Unit) {
+    var expandido by remember { mutableStateOf(true) }
 
-/** Carga la plantilla Excel desde /res/raw/ */
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            TextButton(onClick = { expandido = !expandido }) {
+                Text(
+                    text = if (expandido) "▼ $titulo" else "▶ $titulo",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            AnimatedVisibility(
+                visible = expandido,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    contenido()
+                }
+            }
+        }
+    }
+}
+
+/** Carga la plantilla desde /res/raw */
 fun cargarPlantilla(context: Context): InputStream? {
     return try {
         context.resources.openRawResource(com.example.views.R.raw.plantilla)
@@ -286,4 +294,3 @@ fun cargarPlantilla(context: Context): InputStream? {
         null
     }
 }
-
