@@ -90,8 +90,8 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                                 equipo.fotoUri!!.endsWith(".png", true) -> XSSFWorkbook.PICTURE_TYPE_PNG
                                 equipo.fotoUri!!.endsWith(".jpg", true) || equipo.fotoUri!!.endsWith(".jpeg", true) -> XSSFWorkbook.PICTURE_TYPE_JPEG
                                 else -> {
-                                    // ❗ formato no soportado
-                                    println("⚠️ Formato de imagen no soportado por Apache POI. Usa JPG o PNG.")
+                                    // formato no soportado
+                                    println("Formato de imagen no soportado por Apache POI. Usa JPG o PNG.")
                                     return@use
                                 }
                             }
@@ -101,10 +101,10 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                             val helper = workbook.creationHelper
                             val drawing = sheet.createDrawingPatriarch()
                             val anchor = helper.createClientAnchor().apply {
-                                setCol1(19)
-                                setRow1(6)
-                                setCol2(26)
-                                setRow2(11)
+                                setCol1(0)
+                                setRow1(28)
+                                setCol2(10)
+                                setRow2(35)
                             }
 
                             val pict = drawing.createPicture(anchor, pictureIdx)
@@ -112,7 +112,7 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        println("❌ Error insertando imagen: ${e.message}")
+                        println("Error insertando imagen: ${e.message}")
                     }
                 }
 
