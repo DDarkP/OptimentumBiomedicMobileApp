@@ -54,7 +54,7 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                 val workbook = XSSFWorkbook(plantillaStream)
                 val sheet = workbook.getSheetAt(0)
 
-                // 🧩 Mapeo de campos -> posiciones (fila, columna)
+                // Mapeo de campos -> posiciones (fila, columna)
                 safeSetCellValue(sheet, 3, 9, equipo.nombreEquipo)                 // NOMBRE DEL EQUIPO
                 safeSetCellValue(sheet, 5, 0, equipo.informacionGeneral)           // INFORMACION GENERAL
                 safeSetCellValue(sheet, 6, 3, equipo.marca)                        // MARCA
@@ -78,42 +78,58 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                 safeSetCellValue(sheet, 21, 14, equipo.corrienteMax?.toString() ?: "")// CORRIENTE MAX
                 safeSetCellValue(sheet, 21, 20, equipo.corrienteMin?.toString() ?: "")// CORRIENTE MIN
 
-                // 🖼️ Insertar imagen (si existe)
-                equipo.fotoUri?.let { uriString ->
+                // Insertar imagen (si existe y es válida)
+                if (!equipo.fotoUri.isNullOrEmpty()) {
                     try {
-                        val inputStream = context.contentResolver.openInputStream(Uri.parse(uriString))
-                        val bytes = inputStream?.readBytes()
-                        inputStream?.close()
+                        val imageUri = Uri.parse(equipo.fotoUri)
+                        context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+                            val imageBytes = inputStream.readBytes()
 
-                        if (bytes != null) {
-                            val pictureIdx = workbook.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG)
+                            // Detectar tipo por extensión (evita crash por formato)
+                            val imageType = when {
+                                equipo.fotoUri!!.endsWith(".png", true) -> XSSFWorkbook.PICTURE_TYPE_PNG
+                                equipo.fotoUri!!.endsWith(".jpg", true) || equipo.fotoUri!!.endsWith(".jpeg", true) -> XSSFWorkbook.PICTURE_TYPE_JPEG
+                                else -> {
+                                    // ❗ formato no soportado
+                                    println("⚠️ Formato de imagen no soportado por Apache POI. Usa JPG o PNG.")
+                                    return@use
+                                }
+                            }
+
+                            // Agregar imagen
+                            val pictureIdx = workbook.addPicture(imageBytes, imageType)
                             val helper = workbook.creationHelper
                             val drawing = sheet.createDrawingPatriarch()
-                            val anchor = helper.createClientAnchor()
-
-                            // 🔧 Ajusta la posición de la imagen (usa setters en lugar de asignar)
-                            anchor.setCol1(19)  // columna H (indexada desde 0)
-                            anchor.setRow1(6)  // fila 3
-                            anchor.setCol2(26) // ancho de la imagen
-                            anchor.setRow2(11) // alto de la imagen
+                            val anchor = helper.createClientAnchor().apply {
+                                setCol1(19)
+                                setRow1(6)
+                                setCol2(26)
+                                setRow2(11)
+                            }
 
                             val pict = drawing.createPicture(anchor, pictureIdx)
-                            pict.resize() // ajusta el tamaño automáticamente
+                            pict.resize(1.0) // escala completa dentro del área
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        println("❌ Error insertando imagen: ${e.message}")
                     }
                 }
 
-                // 🗂️ Guardar archivo
-                workbook.write(outputStream)
-                workbook.close()
+// Guardar y cerrar correctamente
+                try {
+                    workbook.write(outputStream)
+                    outputStream.flush()
+                    workbook.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
 
-                _exportacionExitosa.value = "✅ Archivo exportado correctamente con los datos del equipo."
+                _exportacionExitosa.value = "Archivo exportado correctamente con los datos del equipo."
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                _exportacionExitosa.value = "❌ Error al exportar: ${e.message}"
+                _exportacionExitosa.value = "Error al exportar: ${e.message}"
             }
         }
     }

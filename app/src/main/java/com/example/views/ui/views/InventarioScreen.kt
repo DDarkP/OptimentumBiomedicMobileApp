@@ -62,14 +62,14 @@ fun InventarioScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // 📸 Selector de imagen
+    // Selector de imagen
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         viewModel.actualizarFoto(uri)
     }
 
-    // 📂 Crear archivo (el usuario elige la ubicación)
+    // Crear archivo (el usuario elige la ubicación)
     val crearArchivoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -82,13 +82,13 @@ fun InventarioScreen() {
                     viewModel.exportarAExcelAUri(context, plantilla, output)
                     Toast.makeText(
                         context,
-                        "✅ Archivo guardado correctamente",
+                        "Archivo guardado correctamente",
                         Toast.LENGTH_LONG
                     ).show()
                 } else {
                     Toast.makeText(
                         context,
-                        "❌ No se encontró la plantilla Excel en recursos",
+                        "No se encontró la plantilla Excel en recursos",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -111,7 +111,7 @@ fun InventarioScreen() {
         ) {
 
             /** -------- SECCIÓN 1: DATOS GENERALES -------- */
-            SeccionExpandible(titulo = "📘 Datos Generales") {
+            SeccionExpandible(titulo = "Datos Generales") {
                 CampoTexto("Nombre del equipo", equipo.nombreEquipo) { valor ->
                     viewModel.actualizarCampo { it.copy(nombreEquipo = valor) }
                 }
@@ -142,7 +142,7 @@ fun InventarioScreen() {
             }
 
             /** -------- SECCIÓN 2: UBICACIÓN Y RESPONSABLE -------- */
-            SeccionExpandible(titulo = "📍 Ubicación y Responsable") {
+            SeccionExpandible(titulo = "Ubicación y Responsable") {
                 CampoTexto("Edificio", equipo.edificio) { valor ->
                     viewModel.actualizarCampo { it.copy(edificio = valor) }
                 }
@@ -164,7 +164,7 @@ fun InventarioScreen() {
             }
 
             /** -------- SECCIÓN 3: CLASIFICACIÓN TÉCNICA -------- */
-            SeccionExpandible(titulo = "⚙️ Clasificación Técnica") {
+            SeccionExpandible(titulo = "9Clasificación Técnica") {
                 CampoTexto("Clasificación biomédica", equipo.clasificacionBiomedica) { valor ->
                     viewModel.actualizarCampo { it.copy(clasificacionBiomedica = valor) }
                 }
@@ -221,7 +221,7 @@ fun InventarioScreen() {
                 onClick = {
                     viewModel.guardarEquipo()
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("✅ Equipo guardado correctamente")
+                        snackbarHostState.showSnackbar("Equipo guardado correctamente")
                     }
                 },
                 modifier = Modifier.fillMaxWidth()

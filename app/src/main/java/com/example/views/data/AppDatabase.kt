@@ -15,7 +15,7 @@ import com.example.views.data.model.Usuario
  */
 @Database(
     entities = [Usuario::class, Equipo::class],
-    version = 2, // ✅ Incrementado para reflejar los nuevos cambios del modelo
+    version = 2, // Incrementado para reflejar los nuevos cambios del modelo
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -36,9 +36,9 @@ abstract class AppDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "equipos_db" // 📦 Nombre del archivo .db en almacenamiento interno
+                    "equipos_db" // Nombre del archivo .db en almacenamiento interno
                 )
-                    // ⚠️ Destruye y recrea la BD automáticamente si el esquema cambia
+                    // Destruye y recrea la BD automáticamente si el esquema cambia
                     // (solo usar en desarrollo, para producción se crean migraciones reales)
                     .fallbackToDestructiveMigration()
                     .build()
