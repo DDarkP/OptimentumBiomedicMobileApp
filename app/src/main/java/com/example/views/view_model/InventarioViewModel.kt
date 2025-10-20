@@ -78,6 +78,33 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                 safeSetCellValue(sheet, 21, 14, equipo.corrienteMax?.toString() ?: "")// CORRIENTE MAX
                 safeSetCellValue(sheet, 21, 20, equipo.corrienteMin?.toString() ?: "")// CORRIENTE MIN
 
+                // 🖼️ Insertar imagen (si existe)
+                equipo.fotoUri?.let { uriString ->
+                    try {
+                        val inputStream = context.contentResolver.openInputStream(Uri.parse(uriString))
+                        val bytes = inputStream?.readBytes()
+                        inputStream?.close()
+
+                        if (bytes != null) {
+                            val pictureIdx = workbook.addPicture(bytes, XSSFWorkbook.PICTURE_TYPE_JPEG)
+                            val helper = workbook.creationHelper
+                            val drawing = sheet.createDrawingPatriarch()
+                            val anchor = helper.createClientAnchor()
+
+                            // 🔧 Ajusta la posición de la imagen (usa setters en lugar de asignar)
+                            anchor.setCol1(19)  // columna H (indexada desde 0)
+                            anchor.setRow1(6)  // fila 3
+                            anchor.setCol2(26) // ancho de la imagen
+                            anchor.setRow2(11) // alto de la imagen
+
+                            val pict = drawing.createPicture(anchor, pictureIdx)
+                            pict.resize() // ajusta el tamaño automáticamente
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
                 // 🗂️ Guardar archivo
                 workbook.write(outputStream)
                 workbook.close()

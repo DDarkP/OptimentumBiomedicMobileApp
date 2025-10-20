@@ -112,11 +112,11 @@ fun InventarioScreen() {
 
             /** -------- SECCIÓN 1: DATOS GENERALES -------- */
             SeccionExpandible(titulo = "📘 Datos Generales") {
-                CampoTexto("Nombre del equipo", equipo.nombreEquipo) {
-                    viewModel.actualizarCampo { it.copy(nombreEquipo = it.nombreEquipo) }
+                CampoTexto("Nombre del equipo", equipo.nombreEquipo) { valor ->
+                    viewModel.actualizarCampo { it.copy(nombreEquipo = valor) }
                 }
-                CampoTexto("Información general", equipo.informacionGeneral) {
-                    viewModel.actualizarCampo { it.copy(informacionGeneral = it.informacionGeneral) }
+                CampoTexto("Información general", equipo.informacionGeneral) { valor ->
+                    viewModel.actualizarCampo { it.copy(informacionGeneral = valor) }
                 }
                 CampoTexto("Marca", equipo.marca) { valor ->
                     viewModel.actualizarCampo { it.copy(marca = valor) }
