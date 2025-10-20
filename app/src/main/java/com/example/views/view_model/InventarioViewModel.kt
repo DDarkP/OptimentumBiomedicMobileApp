@@ -55,28 +55,28 @@ class InventarioViewModel(private val repository: EquipoRepository) : ViewModel(
                 val sheet = workbook.getSheetAt(0)
 
                 // 🧩 Mapeo de campos -> posiciones (fila, columna)
-                safeSetCellValue(sheet, 5, 3, equipo.nombreEquipo)                 // NOMBRE DEL EQUIPO
-                safeSetCellValue(sheet, 6, 3, equipo.informacionGeneral)           // INFORMACION GENERAL
-                safeSetCellValue(sheet, 7, 3, equipo.marca)                        // MARCA
-                safeSetCellValue(sheet, 8, 3, equipo.modelo)                       // MODELO
-                safeSetCellValue(sheet, 9, 3, equipo.serie)                        // SERIE
-                safeSetCellValue(sheet, 10, 3, equipo.tipo)                        // TIPO
-                safeSetCellValue(sheet, 11, 3, equipo.referencia)                  // REFERENCIA
-                safeSetCellValue(sheet, 12, 3, equipo.codigoEquipo)                // CODIGO DEL EQUIPO
-                safeSetCellValue(sheet, 13, 3, equipo.numeroInventario)            // No. INVENTARIO
-                safeSetCellValue(sheet, 14, 3, equipo.edificio)                    // EDIFICIO
-                safeSetCellValue(sheet, 15, 3, equipo.area)                        // AREA
-                safeSetCellValue(sheet, 16, 3, equipo.direccion)                   // DIRECCION
-                safeSetCellValue(sheet, 17, 3, equipo.ubicacion)                   // UBICACION
-                safeSetCellValue(sheet, 18, 3, equipo.centroCostos)                // CENTRO DE COSTOS
-                safeSetCellValue(sheet, 19, 3, equipo.responsable)                 // RESPONSABLE
-                safeSetCellValue(sheet, 20, 3, equipo.clasificacionBiomedica)      // CLASIFICACION BIOMEDICA
-                safeSetCellValue(sheet, 21, 3, equipo.tecnologiaPredominante)      // TECNOLOGIA PREDOMINANTE
-                safeSetCellValue(sheet, 22, 3, equipo.clasificacionRiesgoBiologico)// CLASIFICACION RIESGO BIOLOGICO
-                safeSetCellValue(sheet, 23, 3, equipo.voltajeMax?.toString() ?: "")// VOLTAJE MAX
-                safeSetCellValue(sheet, 24, 3, equipo.voltajeMin?.toString() ?: "")// VOLTAJE MIN
-                safeSetCellValue(sheet, 25, 3, equipo.corrienteMax?.toString() ?: "")// CORRIENTE MAX
-                safeSetCellValue(sheet, 26, 3, equipo.corrienteMin?.toString() ?: "")// CORRIENTE MIN
+                safeSetCellValue(sheet, 3, 9, equipo.nombreEquipo)                 // NOMBRE DEL EQUIPO
+                safeSetCellValue(sheet, 5, 0, equipo.informacionGeneral)           // INFORMACION GENERAL
+                safeSetCellValue(sheet, 6, 3, equipo.marca)                        // MARCA
+                safeSetCellValue(sheet, 7, 3, equipo.modelo)                       // MODELO
+                safeSetCellValue(sheet, 8, 3, equipo.serie)                        // SERIE
+                safeSetCellValue(sheet, 9, 3, equipo.tipo)                        // TIPO
+                safeSetCellValue(sheet, 6, 15, equipo.referencia)                  // REFERENCIA
+                safeSetCellValue(sheet, 7, 15, equipo.codigoEquipo)                // CODIGO DEL EQUIPO
+                safeSetCellValue(sheet, 8, 15, equipo.numeroInventario)            // No. INVENTARIO
+                safeSetCellValue(sheet, 12, 3, equipo.edificio)                    // EDIFICIO
+                safeSetCellValue(sheet, 13, 3, equipo.area)                        // AREA
+                safeSetCellValue(sheet, 14, 3, equipo.direccion)                   // DIRECCION
+                safeSetCellValue(sheet, 12, 18, equipo.ubicacion)                   // UBICACION
+                safeSetCellValue(sheet, 13, 18, equipo.centroCostos)                // CENTRO DE COSTOS
+                safeSetCellValue(sheet, 14, 18, equipo.responsable)                 // RESPONSABLE
+                safeSetCellValue(sheet, 17 , 0, equipo.clasificacionBiomedica)      // CLASIFICACION BIOMEDICA
+                safeSetCellValue(sheet, 17, 9, equipo.tecnologiaPredominante)      // TECNOLOGIA PREDOMINANTE
+                safeSetCellValue(sheet, 17, 18, equipo.clasificacionRiesgoBiologico)// CLASIFICACION RIESGO BIOLOGICO
+                safeSetCellValue(sheet, 21, 0, equipo.voltajeMax?.toString() ?: "")// VOLTAJE MAX
+                safeSetCellValue(sheet, 21, 7, equipo.voltajeMin?.toString() ?: "")// VOLTAJE MIN
+                safeSetCellValue(sheet, 21, 14, equipo.corrienteMax?.toString() ?: "")// CORRIENTE MAX
+                safeSetCellValue(sheet, 21, 20, equipo.corrienteMin?.toString() ?: "")// CORRIENTE MIN
 
                 // 🗂️ Guardar archivo
                 workbook.write(outputStream)
